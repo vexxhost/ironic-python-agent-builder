@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
       - run: sudo apt-get update
-      - run: sudo apt-get install qemu-utils
+      - run: sudo apt-get install kpartx qemu-utils
       - run: pip install .
       - run: ironic-python-agent-builder centos
         env:
