@@ -6,8 +6,23 @@ on:
   workflow_dispatch:
 
 jobs:
-  ussuri:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        release: [ussuri, victoria]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: pip install tox
+      - run: tox -epep8
+      - run: tox -epy
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    strategy:
+      matrix:
+        release: [ussuri, victoria]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -18,9 +33,9 @@ jobs:
         env:
           DIB_DHCP_TIMEOUT: 60
           DIB_REPOLOCATION_ironic_python_agent: https://github.com/vexxhost/ironic-python-agent
-          DIB_REPOREF_ironic_python_agent: stable/ussuri
+          DIB_REPOREF_ironic_python_agent: stable/${{ matrix.release }}
       - uses: actions/upload-artifact@v2
         with:
-          name: ironic-python-agent
+          name: ironic-python-agent-${{ matrix.release }}
           path: ironic-python-agent*
           if-no-files-found: error
