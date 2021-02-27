@@ -16,13 +16,10 @@ jobs:
       - run: pip install .
       - run: ironic-python-agent-builder centos
         env:
+          DIB_DHCP_TIMEOUT: 60
           DIB_REPOLOCATION_ironic_python_agent: https://github.com/vexxhost/ironic-python-agent
       - uses: actions/upload-artifact@v2
         with:
-          name: ironic-python-agent.initramfs
-          path: ironic-python-agent-builder/ironic-python-agent.initramfs
-      - uses: actions/upload-artifact@v2
-        with:
           name: ironic-python-agent
-          path: ironic-python-agent-builder/
+          path: ironic-python-agent*
           if-no-files-found: error
