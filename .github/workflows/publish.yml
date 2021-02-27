@@ -1,0 +1,17 @@
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  ussuri:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: pip install .
+      - run: ironic-python-agent-builder centos
+        env:
+          DIB_REPOLOCATION_ironic_python_agent: https://github.com/vexxhost/ironic-python-agent-builder
