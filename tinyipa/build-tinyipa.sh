@@ -3,29 +3,17 @@
 set -ex
 WORKDIR=$(readlink -f $0 | xargs dirname)
 source ${WORKDIR}/common.sh
-BUILDDIR="$WORKDIR/tinyipabuild"
-TINYCORE_MIRROR_URL=${TINYCORE_MIRROR_URL:-}
-TINYIPA_REQUIRE_BIOSDEVNAME=${TINYIPA_REQUIRE_BIOSDEVNAME:-false}
-TINYIPA_REQUIRE_IPMITOOL=${TINYIPA_REQUIRE_IPMITOOL:-true}
-IRONIC_LIB_SOURCE=${IRONIC_LIB_SOURCE:-}
-USE_PYTHON3=${USE_PYTHON3:-True}
-TC_RELEASE="11.x"
 
+IRONIC_LIB_SOURCE=${IRONIC_LIB_SOURCE:-}
+
+TC_RELEASE="12.x"
 TGT_RELEASE="v1.0.80"
 QEMU_RELEASE="v4.2.0"
 LSHW_RELEASE="B.02.18"
-
 BIOSDEVNAME_RELEASE="0.7.2"
-IPMITOOL_RELASE="1_8_18"
+IPMITOOL_GIT_HASH="710888479332a46bad78f3d736eff0cbdefd2d1b"
 
-# PYTHON_EXTRA_SOURCES_DIR_LIST is a csv list of python package dirs to include
-PYTHON_EXTRA_SOURCES_DIR_LIST=${PYTHON_EXTRA_SOURCES_DIR_LIST:-}
-
-CHROOT_PATH="/tmp/overides:/usr/local/sbin:/usr/local/bin:/apps/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 CHROOT_CMD="sudo chroot $BUILDDIR /usr/bin/env -i PATH=$CHROOT_PATH http_proxy=$http_proxy https_proxy=$https_proxy no_proxy=$no_proxy"
-
-TC=1001
-STAFF=50
 
 function clone_single_branch {
     git clone --branch $3 --depth=1 $1 $2
@@ -75,8 +63,10 @@ if $TINYIPA_REQUIRE_BIOSDEVNAME; then
     wget -N -O - https://linux.dell.com/biosdevname/biosdevname-${BIOSDEVNAME_RELEASE}/biosdevname-${BIOSDEVNAME_RELEASE}.tar.gz | tar -xz -C "${BUILDDIR}/tmp" -f -
 fi
 if $TINYIPA_REQUIRE_IPMITOOL; then
-    wget -N -O - https://github.com/ipmitool/ipmitool/archive/IPMITOOL_${IPMITOOL_RELASE}.tar.gz | tar -xz -C "${BUILDDIR}/tmp" -f -
-    patch ${BUILDDIR}/tmp/ipmitool-IPMITOOL_${IPMITOOL_RELASE}/src/plugins/lanplus/lanplus_crypt_impl.c < patches/ipmitool-openssl.patch
+    git clone https://github.com/ipmitool/ipmitool.git "${BUILDDIR}/tmp/ipmitool-src"
+    cd "${BUILDDIR}/tmp/ipmitool-src"
+    git reset $IPMITOOL_GIT_HASH --hard
+    cd -
 fi
 
 # Create directory for python local mirror
@@ -239,7 +229,7 @@ fi
 if $TINYIPA_REQUIRE_IPMITOOL; then
     rm -rf $WORKDIR/build_files/ipmitool.tcz
     # NOTE(TheJulia): Explicitly add the libtool path since /usr/local/ is not in path from the chroot.
-    $CHROOT_CMD /bin/sh -c "cd /tmp/ipmitool-* && env LIBTOOL='/usr/local/bin/libtool' ./bootstrap && ./configure && make && make install DESTDIR=/tmp/ipmitool"
+    $CHROOT_CMD /bin/sh -c "cd /tmp/ipmitool-src && env LIBTOOL='/usr/local/bin/libtool' ./bootstrap && ./configure && make && make install DESTDIR=/tmp/ipmitool"
     find $BUILDDIR/tmp/ipmitool/ -type f -executable | xargs file | awk -F ':' '/ELF/ {print $1}' | sudo xargs strip
     cd $WORKDIR/build_files && mksquashfs $BUILDDIR/tmp/ipmitool ipmitool.tcz && md5sum ipmitool.tcz > ipmitool.tcz.md5.txt
 fi

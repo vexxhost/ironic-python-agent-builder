@@ -22,6 +22,8 @@
             voting: false
         - ironic-python-agent-check-image-dib-ubuntu:
             voting: false
+        - ironic-python-agent-check-image-dib-opensuse:
+            voting: false
         - ipa-tempest-wholedisk-bios-ipmi-direct-dib-src:
             voting: false
         - ipa-tempest-bios-ipmi-iscsi-src:
@@ -29,6 +31,8 @@
         - ipa-tempest-ironic-inspector-src:
             voting: false
         - tripleo-buildimage-ironic-python-agent-centos-8:
+            voting: false
+        - ironic-python-agent-test-image-tinyipa-ussuri:
             voting: false
     gate:
       jobs:
